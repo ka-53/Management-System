@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>User Management System</h1>
+
+        <div id="menu">
+            <button onclick="showRegisterUser()">Register a New User</button>
+            <button onclick="showModifyUser()">Modify User Information</button>
+            <button onclick="listAllUsers()">List All Users</button>
+            <button onclick="showCheckUser()">Check User Registration</button>
+        </div>
+
+        <!-- Register User Form -->
+        <div id="registerUserForm" class="form" style="display: none;">
+            <h2>Register a New User</h2>
+            <input type="text" id="regFullName" placeholder="Full Name" />
+            <input type="email" id="regEmail" placeholder="Email" />
+            <input type="date" id="regDateOfBirth" placeholder="Date of Birth" />
+            <button onclick="registerUser()">Register User</button>
+            <button onclick="hideForm()">Cancel</button>
+        </div>
+
+        <!-- Modify User Form -->
+        <div id="modifyUserForm" class="form" style="display: none;">
+            <h2>Modify User Information</h2>
+            <input type="email" id="modOldEmail" placeholder="Current Email" />
+            <input type="text" id="modFullName" placeholder="New Full Name" />
+            <input type="email" id="modEmail" placeholder="New Email" />
+            <input type="date" id="modDateOfBirth" placeholder="New Date of Birth" />
+            <button onclick="modifyUser()">Modify User</button>
+            <button onclick="hideForm()">Cancel</button>
+        </div>
+
+        <!-- Check User Registration Form -->
+        <div id="checkUserForm" class="form" style="display: none;">
+            <h2>Check User Registration</h2>
+            <input type="email" id="checkEmail" placeholder="Email" />
+            <button onclick="checkUserRegistration()">Check Registration</button>
+            <button onclick="hideForm()">Cancel</button>
+        </div>
+
+        <!-- List of Users -->
+        <div id="userList" class="user-list" style="display: none;">
+            <h2>List of Registered Users</h2>
+            <ul id="users"></ul>
+            <button onclick="hideForm()">Close List</button>
+        </div>
+
+        <!-- Status Message -->
+        <div id="statusMessage" class="status" style="display: none;">
+            <p id="message"></p>
+            <button onclick="hideForm()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const apiUrl = 'backend.php';
+
+        function showRegisterUser() {
+            hideAllForms();
+            document.getElementById("registerUserForm").style.display = "block";
+        }
+
+        function showModifyUser() {
+            hideAllForms();
+            document.getElementById("modifyUserForm").style.display = "block";
+        }
+
+        function showCheckUser() {
+            hideAllForms();
+            document.getElementById("checkUserForm").style.display = "block";
+        }
+
+        async function listAllUsers() {
+            hideAllForms();
+
+            const response = await fetch(`${apiUrl}?action=list`);
+            const users = await response.json();
+
+            let userList = document.getElementById("users");
+            userList.innerHTML = "";
+
+            users.forEach(user => {
+                let li = document.createElement("li");
+                li.textContent = `${user.fullName} (${user.email}) - Born: ${user.dateOfBirth}`;
+                userList.appendChild(li);
+            });
+
+            document.getElementById("userList").style.display = "block";
+        }
+
+        async function registerUser() {
+            const fullName = document.getElementById("regFullName").value;
+            const email = document.getElementById("regEmail").value;
+            const dateOfBirth = document.getElementById("regDateOfBirth").value;
+
+            if (!fullName || !email || !dateOfBirth) {
+                showMessage("All fields are required to register a user.");
+                return;
+            }
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'register', fullName, email, dateOfBirth })
+            });
+
+            const result = await response.json();
+            showMessage(result.message || result.error);
+        }
+
+        async function modifyUser() {
+            const oldEmail = document.getElementById("modOldEmail").value;
+            const fullName = document.getElementById("modFullName").value;
+            const email = document.getElementById("modEmail").value;
+            const dateOfBirth = document.getElementById("modDateOfBirth").value;
+
+            if (!oldEmail) {
+                showMessage("Current email is required to modify a user.");
+                return;
+            }
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'modify', oldEmail, fullName, email, dateOfBirth })
+            });
+
+            const result = await response.json();
+            showMessage(result.message || result.error);
+        }
+
+        async function checkUserRegistration() {
+            const email = document.getElementById("checkEmail").value;
+
+            if (!email) {
+                showMessage("Email is required to check user registration.");
+                return;
+            }
+
+            const response = await fetch(`${apiUrl}?action=check&email=${email}`);
+            const result = await response.json();
+            showMessage(result.message || result.error);
+        }
+
+        function hideAllForms() {
+            document.getElementById("registerUserForm").style.display = "none";
+            document.getElementById("modifyUserForm").style.display = "none";
+            document.getElementById("checkUserForm").style.display = "none";
+            document.getElementById("userList").style.display = "none";
+            document.getElementById("statusMessage").style.display = "none";
+        }
+
+        function showMessage(message) {
+            document.getElementById("message").textContent = message;
+            document.getElementById("statusMessage").style.display = "block";
+        }
+    </script>
+</body>
+</html>
